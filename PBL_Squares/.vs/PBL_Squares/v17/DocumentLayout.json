@@ -1,0 +1,41 @@
+{
+  "Version": 1,
+  "WorkspaceRootPath": "C:\\Users\\oguzk\\OneDrive\\Desktop\\PBL_Squares\\PBL_Squares\\",
+  "Documents": [
+    {
+      "AbsoluteMoniker": "D:0:0:{ABBAF1BD-0431-4F46-8684-706145F6125C}|PBL_Squares.csproj|c:\\users\\oguzk\\onedrive\\desktop\\pbl_squares\\pbl_squares\\program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}",
+      "RelativeMoniker": "D:0:0:{ABBAF1BD-0431-4F46-8684-706145F6125C}|PBL_Squares.csproj|solutionrelative:program.cs||{A6C744A8-0E4A-4FC6-886A-064283054674}"
+    }
+  ],
+  "DocumentGroupContainers": [
+    {
+      "Orientation": 0,
+      "VerticalTabListWidth": 256,
+      "DocumentGroups": [
+        {
+          "DockedWidth": 200,
+          "SelectedChildIndex": 1,
+          "Children": [
+            {
+              "$type": "Bookmark",
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+            },
+            {
+              "$type": "Document",
+              "DocumentIndex": 0,
+              "Title": "Program.cs",
+              "DocumentMoniker": "C:\\Users\\oguzk\\OneDrive\\Desktop\\PBL_Squares\\PBL_Squares\\Program.cs",
+              "RelativeDocumentMoniker": "Program.cs",
+              "ToolTip": "C:\\Users\\oguzk\\OneDrive\\Desktop\\PBL_Squares\\PBL_Squares\\Program.cs",
+              "RelativeToolTip": "Program.cs",
+              "ViewState": "AgIAAM4AAAAAAAAAAAApwOYAAAAoAAAAAAAAAA==",
+              "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
+              "WhenOpened": "2025-11-16T19:37:47.893Z",
+              "EditorCaption": ""
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
