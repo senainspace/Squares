@@ -59,8 +59,8 @@ namespace puzzle
         {
 
 
-            Console.WriteLine("Numbers of pieces you want to generate: ");
-            
+            Console.Write("Numbers of pieces you want to generate: ");
+             square = Convert.ToInt16(Console.ReadLine());
 
 
             Console.Write("Enter regularity: ");
@@ -392,6 +392,7 @@ namespace puzzle
 
     }
 }
+
 
 
 
