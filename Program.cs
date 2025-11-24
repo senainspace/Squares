@@ -1,4 +1,9 @@
-﻿namespace puzzle
+
+
+using System;
+using System.Data;
+
+namespace puzzle
 {
     internal class Program
     {
@@ -14,6 +19,10 @@
             int piece = RandomSquaresNumber();
             GeneratePiece(mat, piece);
 
+
+            
+
+
             Console.WriteLine("Piece is getting generated: ");
             Printing(mat);
 
@@ -22,15 +31,22 @@
             Console.WriteLine(" Piece is getting shifted:");
             Printing(mat);
 
-
-
             SavingToMemory(mat);
+
+            RotatePiece90(mat);
+
+            RotatePiece180(mat);
+
+            RotatePiece270(mat);
+
+            ReversePiece(mat);
 
 
 
         }
 
-        static int RandomSquaresNumber() {
+        static int RandomSquaresNumber()
+        {
 
             Random rnd = new Random();
             return rnd.Next(0, 21);
@@ -42,40 +58,44 @@
         static void GeneratePiece(int[,] matrice, int square)
         {
 
-            Console.Write("Enter a piece's square number: ");
-            square = Convert.ToInt16(Console.ReadLine());
+
+            Console.WriteLine("Numbers of pieces you want to generate: ");
+            
+
 
             Console.Write("Enter regularity: ");
             int regularity = Convert.ToInt16(Console.ReadLine());
 
 
+                int counter = 1;
 
+                Random rnd = new Random();
+                int i = rnd.Next(0, 5);
+                int j = rnd.Next(0, 5);
+                matrice[i, j] = 1;
 
-            int counter = 1;
-
-            Random rnd = new Random();
-            int i = rnd.Next(0, 5);
-            int j = rnd.Next(0, 5);
-            matrice[i, j] = 1;
-
-            while (square > counter)
-            {
-                int x = rnd.Next(0, 5);
-
-
-                int y = rnd.Next(0, 5);
-
-                if (matrice[x, y] == 0 && SameEdgeControl(matrice, x, y))
+                while (square > counter)
                 {
+                    int x = rnd.Next(0, 5);
 
-                    matrice[x, y] = 1;
-                    counter++;
+
+                    int y = rnd.Next(0, 5);
+
+                    if (matrice[x, y] == 0 && SameEdgeControl(matrice, x, y))
+                    {
+
+                        matrice[x, y] = 1;
+                        counter++;
+
+                    }
 
                 }
 
+
+
             }
 
-        }
+        
 
 
         static bool SameEdgeControl(int[,] matrice, int i, int j)
@@ -220,43 +240,148 @@
 
 
 
+        static void WritingIntoMatriceAgain(int[,] source, int[,] target)
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    target[i, j] = source[i, j];
+                }
+            }
+        }
+
+
+
 
 
 
         static void RotatePiece90(int[,] matrice)
         {
+            int[,] rotated = new int[5, 5];
+
+            
+            for (int i = 0; i < 5; i++)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    rotated[j, 4 - i] = matrice[i, j];
+                }
+            }
+
+            
+            WritingIntoMatriceAgain(rotated, matrice);
+
+            Console.WriteLine("Rotated 90°:");
+            Printing(matrice);
+
+            NormalizingPieces(matrice);
+
+            Console.WriteLine("Normalized after rotation:");
+            Printing(matrice);
+
+            SavingToMemory(matrice);
+        }
+
+
+        static void RotatePiece180(int[,] matrice)
+        {
+
+            int[,] rotated = new int[5, 5];
+
 
             for (int i = 0; i < 5; i++)
             {
                 for (int j = 0; j < 5; j++)
                 {
-                    if (matrice[i, j] == 1)
-                    {
-
-                    }
+                    rotated[4 - i, 4 - j] = matrice[i, j];
                 }
-
             }
 
+
+            WritingIntoMatriceAgain(rotated, matrice);
+
+            Console.WriteLine("Rotated 180°:");
+            Printing(matrice);
+
+            NormalizingPieces(matrice);
+
+            Console.WriteLine("Normalized after rotation:");
+            Printing(matrice);
+
+            SavingToMemory(matrice);
+
         }
 
-        static void RotatePiece180()
+
+
+
+        static void RotatePiece270(int[,] matrice)
         {
 
+            int[,] rotated = new int[5, 5];
+
+
+            for (int i = 0; i < 5; i++)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    rotated[4 - j, i] = matrice[i, j];
+                }
+            }
+
+
+            WritingIntoMatriceAgain(rotated, matrice);
+
+            Console.WriteLine("Rotated 270°:");
+            Printing(matrice);
+
+            NormalizingPieces(matrice);
+
+            Console.WriteLine("Normalized after rotation:");
+            Printing(matrice);
+
+            SavingToMemory(matrice);
 
         }
-        
 
 
 
-        static void RotatePiece270()
+        static void ReversePiece(int[,] matrice)
         {
 
+            int[,] reversed = new int[5, 5];
+
+
+            for (int i = 0; i < 5; i++)
+            {
+                for (int j = 0; j < 5; j++)
+                {
+                    reversed[i, 4-j] = matrice[i, j];
+
+                    // 4-1 , j
+                }
+            }
+
+
+            WritingIntoMatriceAgain(reversed, matrice);
+
+            Console.WriteLine("Reversed:");
+            Printing(matrice);
+
+            NormalizingPieces(matrice);
+
+            Console.WriteLine("Normalized after reversing:");
+            Printing(matrice);
+
+            SavingToMemory(matrice);
+
         }
 
 
 
-        static void ReversePiece()
+
+        static void Comparison(int [,] matrice)
         {
 
 
@@ -267,5 +392,7 @@
 
     }
 }
+
+
 
 
