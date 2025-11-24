@@ -1,8 +1,0 @@
-D:\Project Based Learning\Project1 Puzzle Generator\Project1 Puzzle Generator\bin\Debug\Project1 Puzzle Generator.exe.config
-D:\Project Based Learning\Project1 Puzzle Generator\Project1 Puzzle Generator\bin\Debug\Project1 Puzzle Generator.exe
-D:\Project Based Learning\Project1 Puzzle Generator\Project1 Puzzle Generator\bin\Debug\Project1 Puzzle Generator.pdb
-D:\Project Based Learning\Project1 Puzzle Generator\Project1 Puzzle Generator\obj\Debug\Project1 Puzzle Generator.csproj.AssemblyReference.cache
-D:\Project Based Learning\Project1 Puzzle Generator\Project1 Puzzle Generator\obj\Debug\Project1 Puzzle Generator.csproj.CoreCompileInputs.cache
-D:\Project Based Learning\Project1 Puzzle Generator\Project1 Puzzle Generator\obj\Debug\Project1 Puzzle Generator.exe
-D:\Project Based Learning\Project1 Puzzle Generator\Project1 Puzzle Generator\obj\Debug\Project1 Puzzle Generator.pdb
-D:\Project Based Learning\Project1 Puzzle Generator\Project1 Puzzle Generator\obj\Debug\Project1 Puzzle Generator.exe.config
