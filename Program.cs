@@ -1,236 +1,238 @@
 ﻿using System;
-using System.Data;
 
-namespace puzzle
+namespace PBL_Squares
 {
     internal class Program
     {
-        static int[,] memory = new int[5, 5];
+        static Random random = new Random();
+        static int[,,,] pieces = new int[12, 24, 5, 5];
 
-        // Tüm parçaları saklamak için 3D array
-        static int[,,] allPieces = new int[200, 5, 5];
-        static int pieceCount = 0;
-
-        static void Main(string[] args)
+        static void Main()
         {
-            Console.Write("How many pieces would you like to generate? ");
-            int pieceNumber = Convert.ToInt16(Console.ReadLine());
+            Console.Write("Please, enter the number of pieces (1–20): ");
+            int numberOfPieces = Convert.ToInt16(Console.ReadLine());
+            int[] square = new int[24];
 
-            int counter = 1;
-            int[,] mat = new int[5, 5];
-            int piece = 1;
-
-            while (counter <= pieceNumber)
+            for (int i = 0; i < numberOfPieces; i++)
             {
-                GeneratePiece(mat, piece);
+                Console.Write("Please, enter the number of squares (2–12): ");
+                int numberOfSquares = Convert.ToInt16(Console.ReadLine());
+                square[i] = numberOfSquares;
 
-                Console.WriteLine("Piece is getting generated: ");
-                Printing(mat);
+                GeneratePiece(numberOfSquares, i);
+                Console.WriteLine("Number of generated piece: " + (i + 1));
+                PrintPiece(numberOfSquares, i);
 
-                NormalizingPieces(mat);
+            }
 
-                Console.WriteLine("Piece is getting shifted:");
-                Printing(mat);
+            Console.WriteLine("Generated Matrices:");
 
-                // Duplicate kontrol
-                if (IsDuplicate(mat))
+            PrintAllPieces(square, numberOfPieces);
+
+            Console.ReadLine();
+        }
+
+        static void GeneratePiece(int numberOfSquares, int index)
+        {
+            int[,] piece = new int[5, 5];
+
+            int x = random.Next(0, 5);
+            int y = random.Next(0, 5);
+            piece[x, y] = 1;
+
+            int numberOfPlacedSquare = 1;
+
+            while (numberOfPlacedSquare < numberOfSquares)
+            {
+                int newPlaced = AddNeighbor(piece, numberOfPlacedSquare);
+
+                if (newPlaced == numberOfPlacedSquare)
+                    continue;
+
+                numberOfPlacedSquare = newPlaced;
+            }
+
+            Normalize(piece);
+            SaveTo4D(piece, numberOfSquares, index);
+        }
+
+        static int AddNeighbor(int[,] piece, int numberOfPlacedSquare)
+        {
+            for (int i = 0; i < 5; i++)
+            {
+                for (int j = 0; j < 5; j++)
                 {
-                    Console.WriteLine("DUPLICATE PIECE FOUND!");
+                    if (piece[i, j] == 1)
+                    {
+                        int dir = random.Next(-1, 3);
+
+                        int newI = i;
+                        int newJ = j;
+
+                        if (dir == -1) newI = i - 1;
+                        if (dir == 1) newI = i + 1;
+                        if (dir == 0) newJ = j - 1;
+                        if (dir == 2) newJ = j + 1;
+
+                        if (newI >= 0 && newI < 5 && newJ >= 0 && newJ < 5)
+                        {
+                            if (piece[newI, newJ] == 0)
+                            {
+                                piece[newI, newJ] = 1;
+                                return numberOfPlacedSquare + 1;
+                            }
+                        }
+                    }
                 }
-                else
+            }
+
+            return numberOfPlacedSquare;
+        }
+
+        static void Normalize(int[,] piece)
+        {
+            int i, j;
+
+            bool isTop = false;
+
+            for (j = 0; j < 5; j++)
+            {
+                if (piece[0, j] == 1)
                 {
-                    Console.WriteLine("UNIQUE PIECE.");
-                    StorePiece(mat);
+                    isTop = true;
+                }
+                    
+            }
+
+            if (!isTop)
+            {
+                int minRow = 5;
+
+                for (i = 0; i < 5; i++)
+                {
+                    for (j = 0; j < 5; j++)
+                    {
+                        if (piece[i, j] == 1 && i < minRow)
+                        {
+                            minRow = i;
+                        }
+                    }
                 }
 
-                RotatePiece90(mat);
-                RotatePiece180(mat);
-                RotatePiece270(mat);
-                ReversePiece(mat);
+                int[,] tmp = new int[5, 5];
 
-                counter++;
+                for (i = 0; i < 5; i++)
+                {
+                    for (j = 0; j < 5; j++)
+                    {
+                        if (piece[i, j] == 1)
+                        {
+                            tmp[i - minRow, j] = 1;
+                        }
+                    }
+                }
+
+                for (i = 0; i < 5; i++)
+                {
+                    for (j = 0; j < 5; j++)
+                    {
+                        piece[i, j] = tmp[i, j];
+                    }
+                }
+            }
+
+            int minColumn = 5;
+
+            for (j = 0; j < 5; j++)
+            {
+                for (i = 0; i < 5; i++)
+                {
+                    if (piece[i, j] == 1 && j < minColumn)
+                    {
+                        minColumn = j;
+                    }
+                }
+            }
+
+            if (minColumn > 0)
+            {
+                int[,] tmpLeft = new int[5, 5];
+
+                for (i = 0; i < 5; i++)
+                {
+                    for (j = 0; j < 5; j++)
+                    {
+                        if (piece[i, j] == 1)
+                        {
+                            tmpLeft[i, j - minColumn] = 1;
+                        }
+                    }
+                }
+
+                for (i = 0; i < 5; i++)
+                {
+                    for (j = 0; j < 5; j++)
+                    {
+                        piece[i, j] = tmpLeft[i, j];
+                    }
+                }
             }
         }
 
-        static void GeneratePiece(int[,] matrice, int square)
+        static void SaveTo4D(int[,] piece, int numberOfSquares, int index)
         {
-            for (int a = 0; a < 5; a++)
-                for (int b = 0; b < 5; b++)
-                    matrice[a, b] = 0;
-
-            Console.WriteLine("Numbers of squares you want to generate in a piece: ");
-            square = Convert.ToInt16(Console.ReadLine());
-
-            Console.Write("Enter regularity: ");
-            int regularity = Convert.ToInt16(Console.ReadLine());
-
-            Random rnd = new Random();
-
-            int i = rnd.Next(0, 5);
-            int j = rnd.Next(0, 5);
-            matrice[i, j] = 1;
-
-            int counter = 1;
-            while (counter < square)
+            for (int i = 0; i < 5; i++)
             {
-                int x = rnd.Next(0, 5);
-                int y = rnd.Next(0, 5);
-
-                if (matrice[x, y] == 0 && SameEdgeControl(matrice, x, y))
+                for (int j = 0; j < 5; j++)
                 {
-                    matrice[x, y] = 1;
-                    counter++;
+                    pieces[numberOfSquares, index, i, j] = piece[i, j];
                 }
             }
         }
 
-        static bool SameEdgeControl(int[,] matrice, int i, int j)
-        {
-            if (i > 0 && matrice[i - 1, j] == 1) return true;
-            if (i < 4 && matrice[i + 1, j] == 1) return true;
-            if (j > 0 && matrice[i, j - 1] == 1) return true;
-            if (j < 4 && matrice[i, j + 1] == 1) return true;
-            return false;
-        }
-
-        static void NormalizingPieces(int[,] matrice)
-        {
-            int minimumRowNumber = 5;
-            int minimumColumnNumber = 5;
-
-            for (int i = 0; i < 5; i++)
-                for (int j = 0; j < 5; j++)
-                    if (matrice[i, j] == 1 && i < minimumRowNumber) minimumRowNumber = i;
-
-            for (int j = 0; j < 5; j++)
-                for (int i = 0; i < 5; i++)
-                    if (matrice[i, j] == 1 && j < minimumColumnNumber) minimumColumnNumber = j;
-
-            int[,] temp = new int[5, 5];
-            for (int i = 0; i < 5; i++)
-                for (int j = 0; j < 5; j++)
-                    if (matrice[i, j] == 1)
-                        temp[i - minimumRowNumber, j - minimumColumnNumber] = 1;
-
-            for (int i = 0; i < 5; i++)
-                for (int j = 0; j < 5; j++)
-                    matrice[i, j] = temp[i, j];
-        }
-
-        static void Printing(int[,] matrice)
+        static void PrintPiece(int numberOfSquares, int index)
         {
             for (int i = 0; i < 5; i++)
             {
                 for (int j = 0; j < 5; j++)
-                    Console.Write(matrice[i, j] == 1 ? 'X' : '.');
+                {
+                    if (pieces[numberOfSquares, index, i, j] == 1)
+                    {
+                        Console.Write("X");
+                    }
+                    else
+                    {
+                        Console.Write(".");
+                    }
+                }
                 Console.WriteLine();
             }
         }
-
-        static void WritingIntoMatriceAgain(int[,] source, int[,] target)
+        static void PrintAllPieces(int[] square, int numberOfPieces)
         {
-            for (int i = 0; i < 5; i++)
-                for (int j = 0; j < 5; j++)
-                    target[i, j] = source[i, j];
-        }
-
-        static void RotatePiece90(int[,] matrice)
-        {
-            int[,] rotated = new int[5, 5];
-            for (int i = 0; i < 5; i++)
-                for (int j = 0; j < 5; j++)
-                    rotated[j, 4 - i] = matrice[i, j];
-
-            WritingIntoMatriceAgain(rotated, matrice);
-            Console.WriteLine("Rotated 90°:");
-            Printing(matrice);
-            NormalizingPieces(matrice);
-        }
-
-        static void RotatePiece180(int[,] matrice)
-        {
-            int[,] rotated = new int[5, 5];
-            for (int i = 0; i < 5; i++)
-                for (int j = 0; j < 5; j++)
-                    rotated[4 - i, 4 - j] = matrice[i, j];
-
-            WritingIntoMatriceAgain(rotated, matrice);
-            Console.WriteLine("Rotated 180°:");
-            Printing(matrice);
-            NormalizingPieces(matrice);
-        }
-
-        static void RotatePiece270(int[,] matrice)
-        {
-            int[,] rotated = new int[5, 5];
-            for (int i = 0; i < 5; i++)
-                for (int j = 0; j < 5; j++)
-                    rotated[4 - j, i] = matrice[i, j];
-
-            WritingIntoMatriceAgain(rotated, matrice);
-            Console.WriteLine("Rotated 270°:");
-            Printing(matrice);
-            NormalizingPieces(matrice);
-        }
-
-        static void ReversePiece(int[,] matrice)
-        {
-            int[,] reversed = new int[5, 5];
-            for (int i = 0; i < 5; i++)
-                for (int j = 0; j < 5; j++)
-                    reversed[i, 4 - j] = matrice[i, j];
-
-            WritingIntoMatriceAgain(reversed, matrice);
-            Console.WriteLine("Reversed:");
-            Printing(matrice);
-            NormalizingPieces(matrice);
-        }
-
-       
-        static void StorePiece(int[,] matrice)
-        {
-            for (int i = 0; i < 5; i++)
-                for (int j = 0; j < 5; j++)
-                    allPieces[pieceCount, i, j] = matrice[i, j];
-            pieceCount++;
-        }
-
-       
-        static bool AreEqual(int[,] a, int[,] b)
-        {
-            for (int i = 0; i < 5; i++)
-                for (int j = 0; j < 5; j++)
-                    if (a[i, j] != b[i, j]) return false;
-            return true;
-        }
-
-        static bool IsDuplicate(int[,] newPiece)
-        {
-            int[,] temp = new int[5, 5];
-            for (int p = 0; p < pieceCount; p++)
+            for (int idx = 0; idx < 24; idx++) 
             {
-                CopyPiece(allPieces, p, temp);
-                NormalizingPieces(temp);
+                char matrixName = (char)('A' + idx);
+                Console.WriteLine("Matrix: " + matrixName);
 
-                if (AreEqual(temp, newPiece)) return true;
+                for (int i = 0; i < 5; i++)
+                {
+                    for (int j = 0; j < 5; j++)
+                    {
+                        if (pieces[square[idx], idx, i, j] == 1)
+                        {
+                            Console.Write(matrixName);
+                        }
+                        else
+                        {
+                            Console.Write(".");
+                        }
+                    }
+                    Console.WriteLine();
+                }
 
-                RotatePiece90(temp); NormalizingPieces(temp); if (AreEqual(temp, newPiece)) return true;
-                RotatePiece180(temp); NormalizingPieces(temp); if (AreEqual(temp, newPiece)) return true;
-                RotatePiece270(temp); NormalizingPieces(temp); if (AreEqual(temp, newPiece)) return true;
-                ReversePiece(temp); NormalizingPieces(temp); if (AreEqual(temp, newPiece)) return true;
+                Console.WriteLine();
             }
-            return false;
-        }
-
-       
-        static void CopyPiece(int[,,] source, int index, int[,] target)
-        {
-            for (int i = 0; i < 5; i++)
-                for (int j = 0; j < 5; j++)
-                    target[i, j] = source[index, i, j];
         }
     }
 }
-
-
-
