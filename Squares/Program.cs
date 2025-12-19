@@ -13,6 +13,15 @@ namespace PBL_Squares
         static Random random = new Random();
         static int[,,,] pieces = new int[13, 24, 5, 5];
         static char[,] puzzle;
+        static int PUZZLE_ROWS = 20;
+        static  int PUZZLE_COLS = 30;
+        static  int TRIALS_PER_PIECE = 10000;
+        static int centerR = PUZZLE_ROWS / 2;
+        static int centerC = PUZZLE_COLS / 2;
+        static bool[] used;
+        static bool DEBUG_MODE = false;
+        // Debug log için liste
+        static System.Collections.Generic.List<string> debugLog = new System.Collections.Generic.List<string>();
         
         static void Main()
         {   
@@ -28,16 +37,48 @@ namespace PBL_Squares
 
             // Parçaları oluştur ve normalize et, unique kontrolü yap
             GenerateAndValidatePieces(numberOfPieces, square);
+            
+            Console.Write("Enter minimum regularity: ");
+            double minReg = Convert.ToDouble(Console.ReadLine());
 
+            Console.Write("Enter maximum regularity: ");
+            double maxReg = Convert.ToDouble(Console.ReadLine());
+            
             // Tüm oryantasyonları göster ve oyun ekranını hazırla
             ShowAllPieceOrientations(numberOfPieces, square);
     
             // Oyun Alanını (Puzzle'ı) Oluştur ve Ekrana Bas
             // Puzzle oluşturma
-            GeneratePuzzle(square, numberOfPieces); // GeneratePuzzle kullanıcıdan boyutu alır ve puzzle'ı doldurur.
+            GeneratePuzzle(square, numberOfPieces, minReg, maxReg);// GeneratePuzzle kullanıcıdan boyutu alır ve puzzle'ı doldurur.
             // Oyun Ekranını Printleme
             PrintGameScreen(square, numberOfPieces);
+            PrintDebugLog();
             Console.ReadLine();
+        }
+        static void PrintDebugLog()
+        {
+            if (!DEBUG_MODE) return;
+
+            Console.WriteLine();
+            Console.WriteLine("======== DEBUG LOG ========");
+
+            if (debugLog.Count == 0)
+            {
+                Console.WriteLine("(no debug entries)");
+            }
+            else
+            {
+                foreach (string line in debugLog)
+                    Console.WriteLine(line);
+            }
+
+            Console.WriteLine("====== END DEBUG LOG ======");
+        }
+        
+        static void DebugLog(string msg)
+        {
+            if (!DEBUG_MODE) return;
+            debugLog.Add(msg);
         }
         static void PrintWelcomeScreen()
         {
@@ -305,6 +346,7 @@ namespace PBL_Squares
                     }
                 }
                 
+                
                 Console.WriteLine(); 
             }
         }
@@ -374,7 +416,7 @@ namespace PBL_Squares
             }
             return counter;
         }
-
+        
         static void Normalize(int[,] piece)
         {
             int minRow = 5, minColumn = 5;
@@ -561,62 +603,214 @@ namespace PBL_Squares
                 }
             } 
         }
-        static void GeneratePuzzle(int[] square, int counter)
+        static void RemovePiece(int[,] piece, int row, int col) //Regularity hesaplaması için geçici parça kaldırma
         {
-            Console.Write("Enter puzzle size (10–25): ");
-            int size = Convert.ToInt32(Console.ReadLine());
-
-            puzzle = new char[size, size];
-
-            for (int i = 0; i < size; i++)
+            for (int i = 0; i < 5; i++)
             {
-                for (int j = 0; j < size; j++)
+                for (int j = 0; j < 5; j++)
                 {
-                    puzzle[i, j] = '.';
+                    if (piece[i, j] == 1)
+                    {
+                        puzzle[row + i, col + j] = '.';
+                    }
+                }
+            }
+        }
+        static int TotalSquares() //Puzzle'daki toplam dolu kare sayısını döner.(Regularity hesaplaması için)
+        {
+            int count = 0;
+
+            for (int i = 0; i < PUZZLE_ROWS; i++)
+            {
+                for (int j = 0; j < PUZZLE_COLS; j++)
+                {
+                    if (puzzle[i, j] != '.')
+                        count++;
                 }
             }
 
-            for (int idx = 0; idx < counter; idx++)
+            return count;
+        }
+        static int ComputePerimeter() //Puzzle'daki toplam çevre uzunluğunu döner.(Regularity hesaplaması için)
+        {
+            int perimeter = 0;
+
+            int[] dr = { -1, 1, 0, 0 };
+            int[] dc = { 0, 0, -1, 1 };
+
+            for (int r = 0; r < PUZZLE_ROWS; r++)
             {
-                int[,] piece = LoadPiece(square[idx], idx);
-                int[,] orientation = RandomOrientation(piece);
-                Normalize(orientation);
-
-                bool isPlaced = false;
-
-                for (int t = 0; t < 8000 && !isPlaced; t++)
+                for (int c = 0; c < PUZZLE_COLS; c++)
                 {
-                    int row = random.Next(0, size);
-                    int col = random.Next(0, size);
-
-                    if (!CanPlace(orientation, row, col, size))
-                    {
+                    if (puzzle[r, c] == '.')
                         continue;
-                    }
 
-                    if (idx == 0)
+                    for (int k = 0; k < 4; k++)
                     {
-                        PlacePiece(orientation, row, col, (char)('A' + idx));
-                        isPlaced = true;
-                    }
-                    else
-                    {
-                        if (TouchesExisting(orientation, row, col, size))
+                        int nr = r + dr[k];
+                        int nc = c + dc[k];
+
+                        if (nr < 0 || nr >= PUZZLE_ROWS ||
+                            nc < 0 || nc >= PUZZLE_COLS ||
+                            puzzle[nr, nc] == '.')
                         {
-                            PlacePiece(orientation, row, col, (char)('A' + idx));
-                            isPlaced = true;
+                            perimeter++;
                         }
                     }
                 }
+            }
 
-                if (!isPlaced)
+            return perimeter;
+        }
+        static double ComputeRegularity() //Puzzle'ın regularity değerini döner.
+        {
+            int squares = TotalSquares();
+            int perimeter = ComputePerimeter();
+
+            if (perimeter == 0)
+                return 0.0;
+
+            double p = perimeter / 4.0;
+            return squares / (p * p);
+        }
+        static int ComputeBoundingBoxArea()
+        {
+            int minR = PUZZLE_ROWS, maxR = -1;
+            int minC = PUZZLE_COLS, maxC = -1;
+
+            for (int r = 0; r < PUZZLE_ROWS; r++)
+            {
+                for (int c = 0; c < PUZZLE_COLS; c++)
                 {
-                    Console.WriteLine($"Could not place piece {(char)('A' + idx)}!");
+                    if (puzzle[r, c] != '.')
+                    {
+                        if (r < minR) minR = r;
+                        if (r > maxR) maxR = r;
+                        if (c < minC) minC = c;
+                        if (c > maxC) maxC = c;
+                    }
                 }
             }
-           
+
+            if (maxR < minR || maxC < minC)
+                return 0;
+
+            return (maxR - minR + 1) * (maxC - minC + 1);
+        }
+        static void PlaceFirstPieceAtCenter(int pieceIndex, int squares)
+        {
+            int[,] piece = LoadPiece(squares, pieceIndex);
+            Normalize(piece);
+
+            int centerR = PUZZLE_ROWS / 2;
+            int centerC = PUZZLE_COLS / 2;
+
+            PlacePiece(piece, centerR, centerC, (char)('A' + pieceIndex));
         }
 
+        static void SelectAndPlaceBestNextPiece(int[] square, int count, double minReg, double maxReg)
+        {
+            DebugLog("---- Selecting next piece ----");
+
+            double bestReg = -1.0;
+            int bestPiece = -1;
+            int bestRow = -1, bestCol = -1;
+            int[,] bestOrientation = null;
+
+            for (int p = 0; p < count; p++)
+            {
+                if (used[p]) continue;
+                DebugLog($"Trying piece {(char)('A' + p)} ({square[p]} squares)");
+
+
+                int[,] basePiece = LoadPiece(square[p], p);
+
+                for (int t = 0; t < TRIALS_PER_PIECE; t++)
+                {
+                    int[,] oriented = RandomOrientation(basePiece);
+                    Normalize(oriented);
+
+                    int r = random.Next(0, PUZZLE_ROWS);
+                    int c = random.Next(0, PUZZLE_COLS);
+
+                    if (!CanPlace(oriented, r, c, PUZZLE_ROWS)) continue;
+                    if (!TouchesExisting(oriented, r, c, PUZZLE_ROWS)) continue;
+
+                    PlacePiece(oriented, r, c, (char)('A' + p));
+                    double reg = ComputeRegularity();
+                    DebugLog($"  candidate {(char)('A' + p)} at ({r},{c}) -> reg={reg:F4}");
+                    RemovePiece(oriented, r, c);
+
+                    if (reg < minReg || reg > maxReg) continue;
+
+                    if (reg > bestReg)
+                    {
+                        bestReg = reg;
+                        bestPiece = p;
+                        bestRow = r;
+                        bestCol = c;
+                        bestOrientation = oriented;
+                        DebugLog($"  BEST so far = {(char)('A' + p)} reg={reg:F4}");
+
+                    }
+                }
+            }
+
+            // === commit best piece ===
+            PlacePiece(bestOrientation, bestRow, bestCol, (char)('A' + bestPiece));
+            DebugLog(
+                $"FINAL PLACEMENT: {(char)('A' + bestPiece)} at ({bestRow},{bestCol})"
+            );
+
+            DebugLog(
+                $"After placement: Squares={TotalSquares()}, " +
+                $"Per={ComputePerimeter()}, " +
+                $"Box={ComputeBoundingBoxArea()}, " +
+                $"Reg={ComputeRegularity():F4}"
+            );
+
+            used[bestPiece] = true;
+        }
+        
+        static void GeneratePuzzle(int[] square, int count, double minReg, double maxReg)
+        {
+            puzzle = new char[PUZZLE_ROWS, PUZZLE_COLS];
+            for (int i = 0; i < PUZZLE_ROWS; i++)
+            for (int j = 0; j < PUZZLE_COLS; j++)
+                puzzle[i, j] = '.';
+
+            used = new bool[count];
+
+            // === STEP 1: find largest piece ===
+            int first = -1;
+            int maxSquares = -1;
+
+            for (int i = 0; i < count; i++)
+            {
+                if (square[i] > maxSquares)
+                {
+                    maxSquares = square[i];
+                    first = i;
+                }
+            } 
+
+            PlaceFirstPieceAtCenter(first, square[first]);
+            DebugLog($"FIRST PIECE PLACED: {(char)('A' + first)} ({square[first]} squares)");
+            DebugLog($"After first: Squares={TotalSquares()}, Per={ComputePerimeter()}, Box={ComputeBoundingBoxArea()}, Reg={ComputeRegularity():F4}");
+            
+            used[first] = true;
+
+            int placedCount = 1;
+            
+            DebugLog("---- STARTING GREEDY SELECTION LOOP ----");
+            // === STEP 2: greedy selection loop ===
+            while (placedCount < count)
+            {
+                SelectAndPlaceBestNextPiece(square, count, minReg, maxReg);
+                placedCount++;
+            }
+        }
+        
         static int[,] RandomOrientation(int[,] piece)
         {
             int[,] t = new int[5, 5];
