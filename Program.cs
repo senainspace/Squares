@@ -521,23 +521,40 @@ namespace PBL_Squares
 
         static void GeneratePuzzle(int[] square, int counter)
         {
-            // DEĞİŞİKLİK BURADA: Boyutları artık burada soruyoruz.
             Console.WriteLine("\n--- BOARD SETTINGS ---");
             Console.Write("Enter puzzle rows (height): ");
             PUZZLE_ROWS = Convert.ToInt32(Console.ReadLine());
-
             Console.Write("Enter puzzle columns (width): ");
             PUZZLE_COLS = Convert.ToInt32(Console.ReadLine());
 
-
             Console.WriteLine("Please enter minimum regularity: ");
             double min = Convert.ToDouble(Console.ReadLine());
-
-            Console.WriteLine("Please enter maksimum regularity: ");
+            Console.WriteLine("Please enter maximum regularity: ");
             double max = Convert.ToDouble(Console.ReadLine());
+
+            if (min > max)
+            {
+                double temp = min;
+                min = max;
+                max = temp;
+            }
+
+            int attemptCount = 0;
+            bool isSuccess = false;
+
+            Console.WriteLine("Searching for a suitable puzzle..."); 
 
             do
             {
+                attemptCount++;
+
+              
+                if (attemptCount >= 1000000)
+                {
+                    Console.WriteLine("\nSTOPPING: Reached 1,000,000 attempts without success.");
+                    break;
+                }
+
                 puzzle = new char[PUZZLE_ROWS, PUZZLE_COLS];
 
                 for (int i = 0; i < PUZZLE_ROWS; i++)
@@ -548,6 +565,8 @@ namespace PBL_Squares
                     }
                 }
 
+                bool allPiecesPlaced = true;
+
                 for (int idx = 0; idx < counter; idx++)
                 {
                     int[,] piece = LoadPiece(square[idx], idx);
@@ -556,7 +575,7 @@ namespace PBL_Squares
 
                     bool isPlaced = false;
 
-                    for (int t = 0; t < 8000 && !isPlaced; t++)
+                    for (int t = 0; t < 2000 && !isPlaced; t++)
                     {
                         int row = random.Next(0, PUZZLE_ROWS);
                         int col = random.Next(0, PUZZLE_COLS);
@@ -583,13 +602,40 @@ namespace PBL_Squares
 
                     if (!isPlaced)
                     {
-                        Console.WriteLine($"Could not place piece {(char)('A' + idx)}!");
+                        allPiecesPlaced = false;
+                        break;
                     }
                 }
 
+                if (!allPiecesPlaced)
+                {
+                    continue;
+                }
+
                 ComputeRegularity();
+
+               
+                if (attemptCount % 50000 == 0)
+                {
+                    Console.Write($"\rAttempts: {attemptCount} (Searching...)");
+                }
+
+                if (regularity >= min && regularity <= max)
+                {
+                    isSuccess = true;
+                }
+
+            } while (!isSuccess);
+
+            if (isSuccess)
+            {
+                Console.WriteLine($"\n\nPUZZLE FOUND! Total Attempts: {attemptCount}");
+                Console.WriteLine($"Final Regularity: {regularity:F4}");
             }
-            while (regularity < min && regularity > max);
+            else
+            {
+                Console.WriteLine("\nFAILED: Could not find a suitable puzzle within 1,000,000 attempts.");
+            }
         }
 
         static int[,] RandomOrientation(int[,] piece)
