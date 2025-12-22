@@ -13,45 +13,44 @@ namespace PBL_Squares
         static Random random = new Random();
         static int[,,,] pieces = new int[13, 24, 5, 5];
         static char[,] puzzle;
-
-        // Bu değişkenler global kalmalı, ancak değerleri GeneratePuzzle içinde atanacak.
-        static int PUZZLE_COLS;
-        static int PUZZLE_ROWS;
-
-        static double regularity;
-
-        static char[,] playerBoard;
-        static int selectedPieceIndex = -1;
-        static int curRow = 0, curCol = 0;
-        static int[,] currentFloatingPiece;
-        static bool[] isPieceUsed;
+        static int PUZZLE_ROWS = 20;
+        static int PUZZLE_COLS= 30;
 
         static void Main()
         {
             PrintWelcomeScreen();
-
-            // MAIN METODU TERTEMİZ KALDI. 
-            // Boyut sorma işlemini GeneratePuzzle içine taşıdık.
-
             Console.Write("Enter number of pieces (1–20): ");
             int numberOfPieces = Convert.ToInt32(Console.ReadLine());
 
             int[] square = new int[numberOfPieces];
             int[] countBySquares = new int[13];
 
+            // Oyuncudan parça boyutlarını al
             GetPieceSizesFromUser(numberOfPieces, square, countBySquares);
 
+            // Parçaları oluştur ve normalize et, unique kontrolü yap
             GenerateAndValidatePieces(numberOfPieces, square);
+
+            // Tüm oryantasyonları göster ve oyun ekranını hazırla
+            ShowAllPieceOrientations(numberOfPieces, square);
 
             ShowAllPieceOrientations(numberOfPieces, square);
 
-            // GeneratePuzzle artık hem boyutu soracak hem de puzzle'ı oluşturacak.
-            GeneratePuzzle(square, numberOfPieces);
+            Console.Write("Enter Minimum Regularity (0,0 - 1,0): ");
+            double minReg = Convert.ToDouble(Console.ReadLine());
+
+            Console.Write("Enter Maximum Regularity (0,0 - 1,0): ");
+            double maxReg = Convert.ToDouble(Console.ReadLine());
+
+            GeneratePuzzle(square, numberOfPieces, minReg, maxReg);
 
             PrintGameScreen(square, numberOfPieces);
             Console.ReadLine();
-        }
 
+            // Oyun Ekranını Printleme
+            PrintGameScreen(square, numberOfPieces);
+            Console.ReadLine();
+        }
         static void PrintWelcomeScreen()
         {
             Console.Clear();
@@ -66,6 +65,7 @@ namespace PBL_Squares
                 @" ╚══════╝  ╚══▀▀═╝   ╚═════╝  ╚═╝  ╚═╝ ╚═╝  ╚═╝ ╚══════╝ ╚══════╝"
             };
 
+            // Ekranın dikey ortasını bul
             int topPadding = (Console.WindowHeight / 2) - 6;
             if (topPadding < 0) topPadding = 0;
 
@@ -73,6 +73,7 @@ namespace PBL_Squares
 
             Console.ForegroundColor = ConsoleColor.Blue;
 
+            // Her satırı ortalayarak yazdır
             foreach (string line in titleLines)
             {
                 int leftPadding = (Console.WindowWidth - line.Length) / 2;
@@ -89,7 +90,6 @@ namespace PBL_Squares
             Console.ReadLine();
             Console.Clear();
         }
-
         static void GetPieceSizesFromUser(int numberOfPieces, int[] square, int[] countBySquares)
         {
             int[] MaxPolyomino = { 0, 0, 1, 2, 5, 12, 35, 108, 369, 1285, 4655, 17073, 63600 };
@@ -125,7 +125,6 @@ namespace PBL_Squares
                 }
             }
         }
-
         static void GenerateAndValidatePieces(int numberOfPieces, int[] square)
         {
             for (int i = 0; i < numberOfPieces; i++)
@@ -134,7 +133,7 @@ namespace PBL_Squares
                 do
                 {
                     GeneratePiece(square[i], i);
-                    NormalizePieceIn4D(square[i], i);
+                    NormalizePieceIn4D(square[i], i); // Normalizasyon 
 
                     isDuplicate = false;
 
@@ -153,11 +152,11 @@ namespace PBL_Squares
                 } while (isDuplicate);
 
                 Console.WriteLine($"Generated Piece {i + 1} (Size: {square[i]})");
-                int[,] generatedPiece = LoadPiece(square[i], i);
-                PrintMatrix(generatedPiece);
+                //printpiece fonksiyonunu sildim ve yerine PrintMatrix kullandım
+                int[,] generatedPiece = LoadPiece(square[i], i); // Parçayı 4D'den 2D'ye yükle
+                PrintMatrix(generatedPiece);                      // 2D matrisi bas
             }
         }
-
         static void ShowAllPieceOrientations(int numberOfPieces, int[] square)
         {
             Console.WriteLine("\n|| Piece Orientations Check ||");
@@ -167,26 +166,30 @@ namespace PBL_Squares
                 Console.WriteLine($"\n--- Piece {idx + 1} ({square[idx]} Square) ---");
                 int[,] originalPiece = LoadPiece(square[idx], idx);
 
+                // Orijinal Parça (Normalize Edilmiş)
                 Console.WriteLine("Original Piece:");
                 PrintMatrix(originalPiece);
 
+                // 4 Rotasyon
                 int[,] current = originalPiece;
                 for (int r = 1; r < 4; r++)
                 {
                     int[,] rotated = new int[5, 5];
                     Rotate90(current, rotated);
-                    Normalize(rotated);
+                    Normalize(rotated); // Her operasyondan sonra normalizasyon 
                     Console.WriteLine($"{r * 90}° Rotation");
                     PrintMatrix(rotated);
                     current = rotated;
                 }
 
+                // Yatay Ters Çevirme (Left-Right Reverse)
                 int[,] leftRight = new int[5, 5];
                 ReverseLR(originalPiece, leftRight);
                 Normalize(leftRight);
                 Console.WriteLine("Left-Right Reverse (LR):");
                 PrintMatrix(leftRight);
 
+                // Dikey Ters Çevirme (Up-Down Reverse)
                 int[,] upDown = new int[5, 5];
                 ReverseUD(originalPiece, upDown);
                 Normalize(upDown);
@@ -196,6 +199,7 @@ namespace PBL_Squares
             Console.WriteLine("\n" + new string('-', 50));
         }
 
+        // PrintPiece fonksiyonunun 2D matrisi basan genel bir versiyonu
         static void PrintMatrix(int[,] piece)
         {
             for (int i = 0; i < 5; i++)
@@ -207,7 +211,6 @@ namespace PBL_Squares
                 Console.WriteLine();
             }
         }
-
         static void PrintGameScreen(int[] square, int numberOfPieces)
         {
             if (puzzle == null)
@@ -216,19 +219,19 @@ namespace PBL_Squares
                 return;
             }
 
-            // Global değişkenlerden (PUZZLE_COLS) okuyacak
-            int puzzleSizeRows = puzzle.GetLength(0);
+            int puzzleSize = puzzle.GetLength(0);
 
+            // Sağ taraf için gerekli yükseklik hesaplamaları
             int piecesPerRow = 5;
             int pieceGroupHeight = 6;
             int totalPieceRows = (int)Math.Ceiling((double)numberOfPieces / piecesPerRow);
             int totalRightSideHeight = totalPieceRows * pieceGroupHeight;
-            int maxRows = Math.Max(puzzleSizeRows, totalRightSideHeight);
+            int maxRows = Math.Max(puzzleSize, totalRightSideHeight);
 
+            // ÜST KOORDİNAT ÇUBUĞU 
             Console.WriteLine();
             Console.Write("  ");
-
-            for (int j = 0; j < PUZZLE_COLS; j++)
+            for (int j = 0; j < puzzleSize; j++)
             {
                 int colNum = j + 1;
                 if (colNum % 2 == 0)
@@ -238,13 +241,16 @@ namespace PBL_Squares
             }
             Console.WriteLine();
 
+            // OYUN EKRANI (PUZZLE + PARÇALAR)
             char[] pieceNames = new char[numberOfPieces];
             for (int i = 0; i < numberOfPieces; i++) pieceNames[i] = (char)('A' + i);
 
             for (int row = 0; row < maxRows; row++)
             {
-                if (row < PUZZLE_ROWS)
+                // SOL TARAF (PUZZLE - SADECE MAVİ)
+                if (row < puzzleSize)
                 {
+                    // Sol Satır Numarası
                     int rowNum = row + 1;
                     Console.ForegroundColor = ConsoleColor.Gray;
                     if (rowNum % 2 == 0)
@@ -253,29 +259,33 @@ namespace PBL_Squares
                         Console.Write("  ");
                     Console.ResetColor();
 
-                    for (int col = 0; col < PUZZLE_COLS; col++)
+                    // Puzzle İçeriği
+                    for (int col = 0; col < puzzleSize; col++)
                     {
                         char cell = puzzle[row, col];
 
-                        if (cell != '.')
+                        if (cell != '.') // Eğer nokta değilse (yani bir parçaysa)
                         {
+                            //harf ne olursa olsun MAVİ renkte yazdır
                             Console.ForegroundColor = ConsoleColor.Blue;
                             Console.Write(cell);
                             Console.ResetColor();
                         }
                         else
                         {
-                            Console.Write(cell);
+                            Console.Write(cell); // Noktalar standart renk
                         }
                     }
                 }
                 else
                 {
-                    Console.Write(new string(' ', 2 + PUZZLE_COLS));
+                    Console.Write(new string(' ', 2 + puzzleSize));
                 }
 
-                Console.Write("          ||          ");
+                // ORTA AYRAÇ 
+                Console.Write("         ||         ");
 
+                // SAĞ TARAF (PARÇALARA ÖZEL RENKLENDİRME) 
                 int currentGroupRow = row / pieceGroupHeight;
                 int lineInPiece = row % pieceGroupHeight;
 
@@ -306,17 +316,19 @@ namespace PBL_Squares
                         }
                     }
                 }
+
                 Console.WriteLine();
             }
         }
-
         static void GeneratePiece(int squares, int index)
         {
             int[,] piece = new int[5, 5];
+
             int row = random.Next(0, 5);
             int column = random.Next(0, 5);
             piece[row, column] = 1;
-            int placedNo = 1; ;
+
+            int placedNo = 1;
 
             while (placedNo < squares)
             {
@@ -326,6 +338,7 @@ namespace PBL_Squares
                     placedNo = newPlaced;
                 }
             }
+
             Normalize(piece);
             SaveTo4D(piece, squares, index);
         }
@@ -339,13 +352,26 @@ namespace PBL_Squares
                     if (piece[i, j] == 1)
                     {
                         int dir = random.Next(-1, 3);
+
                         int newI = i;
                         int newJ = j;
 
-                        if (dir == -1) newI = i - 1;
-                        if (dir == 1) newI = i + 1;
-                        if (dir == 0) newJ = j - 1;
-                        if (dir == 2) newJ = j + 1;
+                        if (dir == -1)
+                        {
+                            newI = i - 1;
+                        }
+                        if (dir == 1)
+                        {
+                            newI = i + 1;
+                        }
+                        if (dir == 0)
+                        {
+                            newJ = j - 1;
+                        }
+                        if (dir == 2)
+                        {
+                            newJ = j + 1;
+                        }
 
                         if (newI >= 0 && newI < 5 && newJ >= 0 && newJ < 5)
                         {
@@ -364,19 +390,27 @@ namespace PBL_Squares
         static void Normalize(int[,] piece)
         {
             int minRow = 5, minColumn = 5;
+
             for (int i = 0; i < 5; i++)
             {
                 for (int j = 0; j < 5; j++)
                 {
                     if (piece[i, j] == 1)
                     {
-                        if (i < minRow) minRow = i;
-                        if (j < minColumn) minColumn = j;
+                        if (i < minRow)
+                        {
+                            minRow = i;
+                        }
+                        if (j < minColumn)
+                        {
+                            minColumn = j;
+                        }
                     }
                 }
             }
 
             int[,] tmp = new int[5, 5];
+
             for (int i = 0; i < 5; i++)
             {
                 for (int j = 0; j < 5; j++)
@@ -442,12 +476,30 @@ namespace PBL_Squares
             ReverseLR(piece1, leftRight);
             ReverseUD(piece1, upDown);
 
-            if (isSame(piece1, piece2)) return true;
-            if (isSame(rotate90, piece2)) return true;
-            if (isSame(rotate180, piece2)) return true;
-            if (isSame(rotate270, piece2)) return true;
-            if (isSame(leftRight, piece2)) return true;
-            if (isSame(upDown, piece2)) return true;
+            if (isSame(piece1, piece2))
+            {
+                return true;
+            }
+            if (isSame(rotate90, piece2))
+            {
+                return true;
+            }
+            if (isSame(rotate180, piece2))
+            {
+                return true;
+            }
+            if (isSame(rotate270, piece2))
+            {
+                return true;
+            }
+            if (isSame(leftRight, piece2))
+            {
+                return true;
+            }
+            if (isSame(upDown, piece2))
+            {
+                return true;
+            }
 
             return false;
         }
@@ -458,7 +510,10 @@ namespace PBL_Squares
             {
                 for (int j = 0; j < 5; j++)
                 {
-                    if (piece1[i, j] != piece2[i, j]) return false;
+                    if (piece1[i, j] != piece2[i, j])
+                    {
+                        return false;
+                    }
                 }
             }
             return true;
@@ -518,134 +573,209 @@ namespace PBL_Squares
                 }
             }
         }
-
-        static void GeneratePuzzle(int[] square, int counter)
+        static void GeneratePuzzle(int[] square, int numberOfPieces, double minReg, double maxReg)
         {
-            Console.WriteLine("\n--- BOARD SETTINGS ---");
-            Console.Write("Enter puzzle rows (height): ");
-            PUZZLE_ROWS = Convert.ToInt32(Console.ReadLine());
-            Console.Write("Enter puzzle columns (width): ");
-            PUZZLE_COLS = Convert.ToInt32(Console.ReadLine());
+            Console.Write("Enter puzzle size (10–25): ");
+            int size = Convert.ToInt32(Console.ReadLine());
 
-            Console.WriteLine("Please enter minimum regularity: ");
-            double min = Convert.ToDouble(Console.ReadLine());
-            Console.WriteLine("Please enter maximum regularity: ");
-            double max = Convert.ToDouble(Console.ReadLine());
+            int totalSquares = 0;
+            for (int i = 0; i < numberOfPieces; i++) totalSquares += square[i];
 
-            if (min > max)
+            // --- YENİ EKLENEN KISIM: SIRALAMA MANTIĞI ---
+            // 1. İndeksleri tutan bir dizi oluştur (0, 1, 2, ... N)
+            int[] sortedIndices = new int[numberOfPieces];
+            for (int i = 0; i < numberOfPieces; i++) sortedIndices[i] = i;
+
+            // 2. Bubble Sort ile BÜYÜKTEN KÜÇÜĞE sırala
+            // Böylece en büyük parçalar (örneğin 12 kareli olan) listenin başına gelir.
+            for (int i = 0; i < numberOfPieces - 1; i++)
             {
-                double temp = min;
-                min = max;
-                max = temp;
+                for (int j = 0; j < numberOfPieces - i - 1; j++)
+                {
+                    // Eğer sonraki parça öncekinden büyükse yer değiştir
+                    if (square[sortedIndices[j]] < square[sortedIndices[j + 1]])
+                    {
+                        int temp = sortedIndices[j];
+                        sortedIndices[j] = sortedIndices[j + 1];
+                        sortedIndices[j + 1] = temp;
+                    }
+                }
             }
+            // ---------------------------------------------
 
-            int attemptCount = 0;
-            bool isSuccess = false;
-
-            Console.WriteLine("Searching for a suitable puzzle..."); 
+            bool isPuzzleValid = false;
+            double currentRegularity = 0;
+            int attempts = 0;
+            int maxGlobalAttempts = 200000;
 
             do
             {
-                attemptCount++;
+                attempts++;
+                isPuzzleValid = true;
 
-              
-                if (attemptCount >= 1000000)
-                {
-                    Console.WriteLine("\nSTOPPING: Reached 1,000,000 attempts without success.");
-                    break;
-                }
-
-                puzzle = new char[PUZZLE_ROWS, PUZZLE_COLS];
-
-                for (int i = 0; i < PUZZLE_ROWS; i++)
-                {
-                    for (int j = 0; j < PUZZLE_COLS; j++)
-                    {
+                // Tahtayı temizle
+                puzzle = new char[size, size];
+                for (int i = 0; i < size; i++)
+                    for (int j = 0; j < size; j++)
                         puzzle[i, j] = '.';
-                    }
-                }
 
-                bool allPiecesPlaced = true;
-
-                for (int idx = 0; idx < counter; idx++)
+                // --- PARÇALARI YERLEŞTİRME DÖNGÜSÜ ---
+                // Döngü artık sıralanmış indeksler üzerinden dönüyor (k: sıra numarası)
+                for (int k = 0; k < numberOfPieces; k++)
                 {
+                    int idx = sortedIndices[k]; // Sıradaki en büyük parçanın orijinal indeksi
                     int[,] piece = LoadPiece(square[idx], idx);
-                    int[,] orientation = RandomOrientation(piece);
-                    Normalize(orientation);
 
-                    bool isPlaced = false;
+                    int bestRow = -1;
+                    int bestCol = -1;
+                    int[,] bestOrientation = null;
+                    double minScoreFound = double.MaxValue;
+                    bool placedAtLeastOnce = false;
 
-                    for (int t = 0; t < 2000 && !isPlaced; t++)
+                    int candidateTries = 300;
+
+                    for (int t = 0; t < candidateTries; t++)
                     {
-                        int row = random.Next(0, PUZZLE_ROWS);
-                        int col = random.Next(0, PUZZLE_COLS);
+                        int[,] orientation = RandomOrientation(piece);
+                        Normalize(orientation);
 
-                        if (!CanPlace(orientation, row, col))
-                        {
-                            continue;
-                        }
+                        int row, col;
 
-                        if (idx == 0)
+                        // ARTIK KONTROL 'k == 0' (Sıralamadaki ilk/en büyük parça mı?)
+                        if (k == 0)
                         {
-                            PlacePiece(orientation, row, col, (char)('A' + idx));
-                            isPlaced = true;
+                            row = (size / 2) - 2;
+                            col = (size / 2) - 2;
+                            if (row < 0) row = 0;
+                            if (col < 0) col = 0;
                         }
                         else
                         {
-                            if (TouchesExisting(orientation, row, col))
-                            {
-                                PlacePiece(orientation, row, col, (char)('A' + idx));
-                                isPlaced = true;
-                            }
+                            row = random.Next(0, size);
+                            col = random.Next(0, size);
                         }
+
+                        if (!CanPlace(orientation, row, col, size)) continue;
+
+                        // İlk parça değilse temas etmeli (k > 0 kontrolü)
+                        if (k > 0 && !TouchesExisting(orientation, row, col, size)) continue;
+
+                        // --- ADAY DEĞERLENDİRME ---
+                        PlacePiece(orientation, row, col, 'X');
+
+                        int currentPerimeter = CalculatePerimeter(size);
+                        double distToCenter = CalculateDistanceToCenter(orientation, row, col, size);
+                        double score = currentPerimeter + (distToCenter * 0.5);
+
+                        if (score < minScoreFound)
+                        {
+                            minScoreFound = score;
+                            bestRow = row;
+                            bestCol = col;
+                            bestOrientation = orientation;
+                            placedAtLeastOnce = true;
+                        }
+
+                        RemovePiece(orientation, row, col);
+
+                        // En büyük parça (ilk parça) için tek deneme yeterli
+                        if (k == 0) break;
                     }
 
-                    if (!isPlaced)
+                    if (placedAtLeastOnce)
                     {
-                        allPiecesPlaced = false;
+                        PlacePiece(bestOrientation, bestRow, bestCol, (char)('A' + idx));
+                    }
+                    else
+                    {
+                        isPuzzleValid = false;
                         break;
                     }
                 }
 
-                if (!allPiecesPlaced)
+                if (isPuzzleValid)
                 {
-                    continue;
+                    int perimeter = CalculatePerimeter(size);
+                    currentRegularity = CalculateRegularityScore(totalSquares, perimeter);
+
+                    if (currentRegularity < minReg || currentRegularity > maxReg)
+                    {
+                        isPuzzleValid = false;
+                    }
                 }
 
-                ComputeRegularity();
-
-               
-                if (attemptCount % 50000 == 0)
+                if (attempts > maxGlobalAttempts)
                 {
-                    Console.Write($"\rAttempts: {attemptCount} (Searching...)");
+                    Console.WriteLine($"\nFailed to find a puzzle after {maxGlobalAttempts} attempts.");
+                    return;
                 }
 
-                if (regularity >= min && regularity <= max)
-                {
-                    isSuccess = true;
-                }
+                if (attempts % 5000 == 0) Console.Write(".");
 
-            } while (!isSuccess);
+            } while (!isPuzzleValid);
 
-            if (isSuccess)
+            Console.WriteLine($"\n\nPuzzle Generated Successfully in {attempts} attempts.");
+            Console.WriteLine($"Final Regularity: {currentRegularity:F4}");
+        }
+        static void RemovePiece(int[,] piece, int row, int column)
+        {
+            for (int i = 0; i < 5; i++)
             {
-                Console.WriteLine($"\n\nPUZZLE FOUND! Total Attempts: {attemptCount}");
-                Console.WriteLine($"Final Regularity: {regularity:F4}");
+                for (int j = 0; j < 5; j++)
+                {
+                    if (piece[i, j] == 1)
+                    {
+                        puzzle[row + i, column + j] = '.';
+                    }
+                }
             }
-            else
+        }
+
+        // Parçanın ağırlık merkezinin, haritanın merkezine uzaklığını hesaplar
+        static double CalculateDistanceToCenter(int[,] piece, int row, int col, int boardSize)
+        {
+            double centerX = boardSize / 2.0;
+            double centerY = boardSize / 2.0;
+
+            double pieceTotalRow = 0;
+            double pieceTotalCol = 0;
+            int count = 0;
+
+            for (int i = 0; i < 5; i++)
             {
-                Console.WriteLine("\nFAILED: Could not find a suitable puzzle within 1,000,000 attempts.");
+                for (int j = 0; j < 5; j++)
+                {
+                    if (piece[i, j] == 1)
+                    {
+                        // Parçanın o anki board üzerindeki koordinatı
+                        pieceTotalRow += (row + i);
+                        pieceTotalCol += (col + j);
+                        count++;
+                    }
+                }
             }
+
+            if (count == 0) return 0;
+
+            // Parçanın ağırlık merkezi
+            double pCenterRow = pieceTotalRow / count;
+            double pCenterCol = pieceTotalCol / count;
+
+            // Öklid mesafesi
+            double dist = Math.Sqrt(Math.Pow(pCenterRow - centerY, 2) + Math.Pow(pCenterCol - centerX, 2));
+            return dist;
         }
 
         static int[,] RandomOrientation(int[,] piece)
         {
             int[,] t = new int[5, 5];
+
             for (int i = 0; i < 5; i++)
                 for (int j = 0; j < 5; j++)
                     t[i, j] = piece[i, j];
 
             int rotate = random.Next(0, 4);
+
             for (int r = 0; r < rotate; r++)
             {
                 int[,] temp = new int[5, 5];
@@ -654,6 +784,7 @@ namespace PBL_Squares
             }
 
             int reverse = random.Next(0, 3);
+
             if (reverse == 1)
             {
                 int[,] temp = new int[5, 5];
@@ -666,30 +797,29 @@ namespace PBL_Squares
                 ReverseUD(t, temp);
                 t = temp;
             }
+
             return t;
         }
 
         static bool CanPlace(int[,] piece, int row, int column)
         {
-            int maxRows = puzzle.GetLength(0);
-            int maxCols = puzzle.GetLength(1);
-
             for (int i = 0; i < 5; i++)
             {
                 for (int j = 0; j < 5; j++)
                 {
                     if (piece[i, j] == 1)
                     {
-                        if (row + i >= maxRows || column + j >= maxCols)
-                        {
-                            return false;
-                        }
+                        int r= row+ i;
+                        int c= column + j;
+                        if(r<0|| r >=PUZZLE_ROWS) return false;
+                        if(c<0|| c >=PUZZLE_COLS) return false;
 
-                        if (puzzle[row + i, column + j] != '.')
+                        if (puzzle[r,c]!='.')
                         {
                             return false;
                         }
                     }
+                    
                 }
             }
             return true;
@@ -709,11 +839,9 @@ namespace PBL_Squares
             }
         }
 
+
         static bool TouchesExisting(int[,] piece, int row, int column)
         {
-            int maxRows = puzzle.GetLength(0);
-            int maxCols = puzzle.GetLength(1);
-
             for (int i = 0; i < 5; i++)
             {
                 for (int j = 0; j < 5; j++)
@@ -723,78 +851,61 @@ namespace PBL_Squares
                         int r = row + i;
                         int c = column + j;
 
-                        if (r > 0 && puzzle[r - 1, c] != '.') return true;
-                        if (r < maxRows - 1 && puzzle[r + 1, c] != '.') return true;
-                        if (c > 0 && puzzle[r, c - 1] != '.') return true;
-                        if (c < maxCols - 1 && puzzle[r, c + 1] != '.') return true;
+                        if (r > 0 && puzzle[r - 1, c] != '.')
+                        {
+                            return true;
+                        }
+                        if (r <  PUZZLE_ROWS && puzzle[r + 1, c] != '.')
+                        {
+                            return true;
+                        }
+
+                        if (c > 0 && puzzle[r, c - 1] != '.')
+                        {
+                            return true;
+                        }
+                        if (c < PUZZLE_COLS - 1 && puzzle[r, c + 1] != '.')
+                        {
+                            return true;
+                        }
                     }
                 }
             }
             return false;
         }
 
-        static int ComputePerimeter()
+
+        static int CalculatePerimeter(int size)
         {
             int perimeter = 0;
-            int[] dr = { -1, 1, 0, 0 };
-            int[] dc = { 0, 0, -1, 1 };
 
-            for (int r = 0; r < PUZZLE_ROWS; r++)
+            for (int i = 0; i < size; i++)
             {
-                for (int c = 0; c < PUZZLE_COLS; c++)
+                for (int j = 0; j < size; j++)
                 {
-                    if (puzzle[r, c] == '.') continue;
-
-                    for (int k = 0; k < 4; k++)
+                    if (puzzle[i, j] != '.')
                     {
-                        int nr = r + dr[k];
-                        int nc = c + dc[k];
-
-                        if (nr < 0 || nr >= PUZZLE_ROWS ||
-                            nc < 0 || nc >= PUZZLE_COLS ||
-                            puzzle[nr, nc] == '.')
-                        {
-                            perimeter++;
-                        }
+                        if (i == 0 || puzzle[i - 1, j] == '.') perimeter++;
+                        if (i == size - 1 || puzzle[i + 1, j] == '.') perimeter++;
+                        if (j == 0 || puzzle[i, j - 1] == '.') perimeter++;
+                        if (j == size - 1 || puzzle[i, j + 1] == '.') perimeter++;
                     }
                 }
             }
             return perimeter;
         }
 
-        static double ComputeRegularity()
+        static double CalculateRegularityScore(int totalSquares, int perimeter)
         {
-            int squares = TotalSquares();
-            int perimeter = ComputePerimeter();
+            if (perimeter == 0) return 0;
 
-            if (perimeter == 0) return 0.0;
+            double denominatorBase = perimeter / 4.0;
+            double regularity = totalSquares / (denominatorBase * denominatorBase);
 
-            double p = perimeter / 4.0;
-            return regularity = squares / (p * p);
+            return regularity;
         }
 
-        static int TotalNumberofSquares(int numberOfPieces, int[] square)
-        {
-            int totalSquares = 0;
-            for (int i = 0; i < numberOfPieces; i++)
-            {
-                totalSquares += square[i];
-            }
-            Console.WriteLine($"Total number of squares in all pieces: {totalSquares}");
-            return totalSquares;
-        }
 
-        static int TotalSquares()
-        {
-            int count = 0;
-            for (int i = 0; i < PUZZLE_ROWS; i++)
-            {
-                for (int j = 0; j < PUZZLE_COLS; j++)
-                {
-                    if (puzzle[i, j] != '.') count++;
-                }
-            }
-            return count;
-        }
+
     }
 }
