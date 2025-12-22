@@ -575,8 +575,10 @@ namespace PBL_Squares
         }
         static void GeneratePuzzle(int[] square, int numberOfPieces, double minReg, double maxReg)
         {
-            Console.Write("Enter puzzle size (10–25): ");
-            int size = Convert.ToInt32(Console.ReadLine());
+            // size yerine sabit puzzle boyutları kullanılıyor
+            int rows = PUZZLE_ROWS;
+            int cols = PUZZLE_COLS;
+
 
             int totalSquares = 0;
             for (int i = 0; i < numberOfPieces; i++) totalSquares += square[i];
@@ -613,11 +615,11 @@ namespace PBL_Squares
                 attempts++;
                 isPuzzleValid = true;
 
-                // Tahtayı temizle
-                puzzle = new char[size, size];
-                for (int i = 0; i < size; i++)
-                    for (int j = 0; j < size; j++)
+                puzzle = new char[PUZZLE_ROWS, PUZZLE_COLS];
+                for (int i = 0; i < PUZZLE_ROWS; i++)
+                    for (int j = 0; j < PUZZLE_COLS; j++)
                         puzzle[i, j] = '.';
+
 
                 // --- PARÇALARI YERLEŞTİRME DÖNGÜSÜ ---
                 // Döngü artık sıralanmış indeksler üzerinden dönüyor (k: sıra numarası)
@@ -644,27 +646,29 @@ namespace PBL_Squares
                         // ARTIK KONTROL 'k == 0' (Sıralamadaki ilk/en büyük parça mı?)
                         if (k == 0)
                         {
-                            row = (size / 2) - 2;
-                            col = (size / 2) - 2;
+                            row = (PUZZLE_ROWS / 2) - 2;
+                            col = (PUZZLE_COLS / 2) - 2;
+
                             if (row < 0) row = 0;
                             if (col < 0) col = 0;
                         }
                         else
                         {
-                            row = random.Next(0, size);
-                            col = random.Next(0, size);
+                            row = random.Next(0, PUZZLE_ROWS);
+                            col = random.Next(0, PUZZLE_COLS);
+
                         }
 
-                        if (!CanPlace(orientation, row, col, size)) continue;
+                        if (!CanPlace(orientation, row, col)) continue;
 
                         // İlk parça değilse temas etmeli (k > 0 kontrolü)
-                        if (k > 0 && !TouchesExisting(orientation, row, col, size)) continue;
+                        if (k > 0 && !TouchesExisting(orientation, row, col)) continue;
 
                         // --- ADAY DEĞERLENDİRME ---
                         PlacePiece(orientation, row, col, 'X');
 
-                        int currentPerimeter = CalculatePerimeter(size);
-                        double distToCenter = CalculateDistanceToCenter(orientation, row, col, size);
+                        int currentPerimeter = CalculatePerimeter();
+                        double distToCenter = CalculateDistanceToCenter(orientation, row, col);
                         double score = currentPerimeter + (distToCenter * 0.5);
 
                         if (score < minScoreFound)
@@ -695,7 +699,7 @@ namespace PBL_Squares
 
                 if (isPuzzleValid)
                 {
-                    int perimeter = CalculatePerimeter(size);
+                    int perimeter = CalculatePerimeter();
                     currentRegularity = CalculateRegularityScore(totalSquares, perimeter);
 
                     if (currentRegularity < minReg || currentRegularity > maxReg)
@@ -732,10 +736,10 @@ namespace PBL_Squares
         }
 
         // Parçanın ağırlık merkezinin, haritanın merkezine uzaklığını hesaplar
-        static double CalculateDistanceToCenter(int[,] piece, int row, int col, int boardSize)
+        static double CalculateDistanceToCenter(int[,] piece, int row, int col)
         {
-            double centerX = boardSize / 2.0;
-            double centerY = boardSize / 2.0;
+            double centerX = PUZZLE_ROWS / 2.0;
+            double centerY = PUZZLE_COLS / 2.0;
 
             double pieceTotalRow = 0;
             double pieceTotalCol = 0;
@@ -839,7 +843,6 @@ namespace PBL_Squares
             }
         }
 
-
         static bool TouchesExisting(int[,] piece, int row, int column)
         {
             for (int i = 0; i < 5; i++)
@@ -851,49 +854,47 @@ namespace PBL_Squares
                         int r = row + i;
                         int c = column + j;
 
+                        // Yukarı
                         if (r > 0 && puzzle[r - 1, c] != '.')
-                        {
                             return true;
-                        }
-                        if (r <  PUZZLE_ROWS && puzzle[r + 1, c] != '.')
-                        {
-                            return true;
-                        }
 
+                        // Aşağı  ✅ DÜZELTİLDİ
+                        if (r < PUZZLE_ROWS - 1 && puzzle[r + 1, c] != '.')
+                            return true;
+
+                        // Sol
                         if (c > 0 && puzzle[r, c - 1] != '.')
-                        {
                             return true;
-                        }
+
+                        // Sağ  ✅ DÜZELTİLDİ
                         if (c < PUZZLE_COLS - 1 && puzzle[r, c + 1] != '.')
-                        {
                             return true;
-                        }
                     }
                 }
             }
             return false;
         }
 
-
-        static int CalculatePerimeter(int size)
+        static int CalculatePerimeter()
         {
             int perimeter = 0;
 
-            for (int i = 0; i < size; i++)
+            for (int i = 0; i < PUZZLE_ROWS; i++)
             {
-                for (int j = 0; j < size; j++)
+                for (int j = 0; j < PUZZLE_COLS; j++)
                 {
                     if (puzzle[i, j] != '.')
                     {
                         if (i == 0 || puzzle[i - 1, j] == '.') perimeter++;
-                        if (i == size - 1 || puzzle[i + 1, j] == '.') perimeter++;
+                        if (i == PUZZLE_ROWS - 1 || puzzle[i + 1, j] == '.') perimeter++;
                         if (j == 0 || puzzle[i, j - 1] == '.') perimeter++;
-                        if (j == size - 1 || puzzle[i, j + 1] == '.') perimeter++;
+                        if (j == PUZZLE_COLS - 1 || puzzle[i, j + 1] == '.') perimeter++;
                     }
                 }
             }
             return perimeter;
         }
+
 
         static double CalculateRegularityScore(int totalSquares, int perimeter)
         {
