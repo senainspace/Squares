@@ -139,6 +139,10 @@ namespace PBL_Squares
 
                     Console.WriteLine("\nComputer's Solution was:");
                     PrintGameScreen(solutionPuzzle, square, numberOfPieces, true);
+                    Console.WriteLine();
+                    Console.WriteLine("Press any key to continue...");
+                    Console.ReadKey();
+                    Console.Clear();
                 }
                 else
                 {
@@ -150,31 +154,28 @@ namespace PBL_Squares
 
                     Console.WriteLine("\nThe solution was:");
                     PrintGameScreen(solutionPuzzle, square, numberOfPieces, true);
+                    Console.WriteLine();
+                    Console.WriteLine("Press any key to continue...");
+                    Console.ReadKey();
+                    Console.Clear();
                 }
+
 
                 
-                Console.WriteLine("\n-----------------------------------------");
-                Console.WriteLine("What would you like to do?");
-                Console.WriteLine("1. Next Round (Use SAME pieces & regularity)");
-                Console.WriteLine("2. New Game (Define NEW pieces & regularity)");
-                Console.WriteLine("3. Exit Game");
-                Console.Write("Select (1-3): ");
 
-                string choice = Console.ReadLine();
+                int secim = InteractiveRoundChoice();
 
-                if (choice == "1")
+                if (secim == 1) 
                 {
-                    changeSettings = false; 
-                    
+                    changeSettings = false;
                 }
-                else if (choice == "2")
+                else if (secim == 2) 
                 {
-                    changeSettings = true; 
-                    
+                    changeSettings = true;
                 }
-                else
+                else 
                 {
-                    isPlaying = false; 
+                    isPlaying = false;
                 }
             }
 
@@ -182,6 +183,95 @@ namespace PBL_Squares
             Console.ReadKey();
         }
 
+
+
+        public static int InteractiveRoundChoice()
+        {
+            Console.CursorVisible = false;
+            int currentSelection = 0;
+            string[] options = {
+        "Next Round (Keep same pieces)",
+        "New Game (Select new pieces)",
+        "Exit Game"
+    };
+
+            while (true)
+            {
+                Console.Clear();
+
+                
+                int totalLines = 14;
+                int startY = (Console.WindowHeight - totalLines) / 2;
+
+                
+                if (startY < 0) startY = 0;
+
+                Console.SetCursorPosition(0, startY);
+
+               
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                WriteCentered("╔════════════════════════════════╗");
+                WriteCentered("║   What would you like to do?   ║");
+                WriteCentered("╚════════════════════════════════╝");
+                Console.WriteLine(); 
+
+                
+                for (int i = 0; i < options.Length; i++)
+                {
+                    if (i == currentSelection)
+                    {
+                        
+                        Console.ForegroundColor = ConsoleColor.Black;
+                        Console.BackgroundColor = ConsoleColor.Gray;
+                        WriteCentered($"  >> {options[i]} <<  ");
+                    }
+                    else
+                    {
+                        
+                        Console.ResetColor();
+                        WriteCentered($"     {options[i]}     ");
+                    }
+                    
+                    Console.WriteLine();
+                }
+
+                Console.ResetColor();
+                Console.WriteLine();
+                Console.ForegroundColor = ConsoleColor.DarkGray;
+                WriteCentered("----------------------------------");
+                WriteCentered("Use [Arrow Keys] to Navigate, [Enter] to Select");
+
+                
+                var key = Console.ReadKey(true).Key;
+
+                switch (key)
+                {
+                    case ConsoleKey.UpArrow:
+                        currentSelection--;
+                        if (currentSelection < 0) currentSelection = options.Length - 1;
+                        break;
+                    case ConsoleKey.DownArrow:
+                        currentSelection++;
+                        if (currentSelection >= options.Length) currentSelection = 0;
+                        break;
+                    case ConsoleKey.Enter:
+                        Console.CursorVisible = true;
+                        return currentSelection + 1;
+                }
+            }
+        }
+
+        
+        static void WriteCentered(string text)
+        {
+            int screenWidth = Console.WindowWidth;
+            int stringWidth = text.Length;
+            int left = (screenWidth - stringWidth) / 2;
+            if (left < 0) left = 0;
+
+            Console.SetCursorPosition(left, Console.CursorTop);
+            Console.WriteLine(text);
+        }
 
         static bool PlayGame(int[] square, int numberOfPieces, double targetRegularity, int totalSquares)
         {
@@ -1303,7 +1393,7 @@ namespace PBL_Squares
         static void ReverseLR(int[,] s, int[,] d)
         {
             for (int i = 0; i < 5; i++)
-            {
+            {;
                 for (int j = 0; j < 5; j++)
                 {
                     d[i, 4 - j] = s[i, j];
