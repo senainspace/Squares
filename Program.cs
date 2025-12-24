@@ -179,6 +179,7 @@ namespace PBL_Squares
                 }
             }
 
+            Console.WriteLine();
             Console.WriteLine("Exiting... Press any key.");
             Console.ReadKey();
         }
@@ -1413,3 +1414,4 @@ namespace PBL_Squares
         }
     }
 }
+
